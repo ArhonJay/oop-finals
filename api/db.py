@@ -1,7 +1,8 @@
 import os
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
+from api.models.user import Base, User
 
 load_dotenv()
 
@@ -14,26 +15,73 @@ class Database:
         self.password = os.getenv('DB_PASSWORD')
         self.engine = create_engine(f'postgresql://{self.user}:{self.password}@{self.host}/{self.dbname}')
         self.Session = sessionmaker(bind=self.engine)
-        self.metadata = MetaData()
-        self.users_table = Table('users', self.metadata,
-                                 Column('id', Integer, primary_key=True),
-                                 Column('username', String, unique=True, nullable=False),
-                                 Column('password', String, nullable=False))
-        self.metadata.create_all(self.engine)
+        Base.metadata.create_all(self.engine)
 
     def get_db_session(self):
         session = self.Session()
         return session
 
-    def register_user(self, username, password):
+    def register_user(self, username, password, role):
         session = self.get_db_session()
         try:
-            new_user = self.users_table.insert().values(username=username, password=password)
-            session.execute(new_user)
+            new_user = User(username=username, password=password, role=role)
+            session.add(new_user)
             session.commit()
             print('User registered successfully')
         except Exception as e:
             session.rollback()
+            print(f'Error occurred: {e}')
+        finally:
+            session.close()
+
+    def login_user(self, username, password):
+        session = self.get_db_session()
+        try:
+            user = session.query(User).filter_by(username=username).first()
+            if user and user.password == password:
+                print(f'User {username} logged in successfully')
+                return True
+            else:
+                print('Invalid username or password')
+                return False
+        except Exception as e:
+            print(f'Error occurred: {e}')
+            return False
+        finally:
+            session.close()
+
+    def add_product(self, username, product_name, product_price, product_quantity, product_description):
+        session = self.get_db_session()
+        try:
+            user = session.query(User).filter_by(username=username).first()
+            if user.add_product(session, product_name, product_price, product_quantity, product_description):
+                return True
+            return False
+        except Exception as e:
+            print(f'Error occurred: {e}')
+        finally:
+            session.close()
+
+    def remove_product(self, username, product_id):
+        session = self.get_db_session()
+        try:
+            user = session.query(User).filter_by(username=username).first()
+            if user.remove_product(session, product_id):
+                return True
+            return False
+        except Exception as e:
+            print(f'Error occurred: {e}')
+        finally:
+            session.close()
+
+    def view_sell_summary(self, username):
+        session = self.get_db_session()
+        try:
+            user = session.query(User).filter_by(username=username).first()
+            if user:
+                return user.view_order_summary(session)
+            return []
+        except Exception as e:
             print(f'Error occurred: {e}')
         finally:
             session.close()
