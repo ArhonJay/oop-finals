@@ -11,4 +11,7 @@ class Product(Base):
     product_quantity = Column(Integer, nullable=False)  
     product_description = Column(Text, nullable=True)
     product_review = Column(Text, nullable=True)
+    product_image = Column(Text, nullable=True)
     seller_id = Column(Integer, nullable=False)
+
+    

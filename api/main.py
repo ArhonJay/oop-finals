@@ -39,6 +39,21 @@ def login():
             return 'Incorrect username or password', 401
     except Exception as e:
         return str(e), 500
+
+@app.route('/change_role', methods=['PUT'])
+def change_role():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        new_role = data.get('new_role')
+        if not username or not new_role:
+            return 'Missing required fields', 400
+        if database.change_role(username, new_role):
+            return f'Role changed to {new_role}', 200
+        else:
+            return 'User not found', 404
+    except Exception as e:
+        return str(e), 500  
     
 @app.route('/add_product', methods=['POST'])
 def add_product():
@@ -49,9 +64,10 @@ def add_product():
         product_price = data.get('product_price')
         product_quantity = data.get('product_quantity')
         product_description = data.get('product_description')
+        product_image = data.get('product_image')
         if not username or not product_name or not product_price or not product_quantity:
             return 'Missing required fields', 400
-        if database.add_product(username, product_name, product_price, product_quantity, product_description):
+        if database.add_product(username, product_name, product_price, product_quantity, product_description, product_image):
             return f'Product {product_name} added successfully', 201
         else:
             return 'Only sellers can add products', 403
@@ -73,17 +89,83 @@ def remove_product():
     except Exception as e:
         return str(e), 500
     
-@app.route('/view_sell_summary', methods=['GET'])
-def view_sell_summary():
+@app.route('/view_seller_summary', methods=['GET'])
+def view_seller_summary():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        page = int (data.get('page', 1))
+        per_page = int (data.get('per_page', 5))
+        if not username:
+            return 'Missing required fields', 400
+        summary = database.view_seller_summary(username, page, per_page)
+        if summary:
+            return {'summary': summary}, 200
+        else:
+            return f'The product schema is empty or {username} is not seller', 403
+    except Exception as e:
+        return str(e), 500
+    
+@app.route('/view_order_summary', methods=['GET'])
+def view_order_summary():
+    try:
+        data = request.get_json()   
+        username = data.get('username')
+        page = int (data.get('page', 1))
+        per_page = int (data.get('per_page', 5))
+        if not username:
+            return 'Missing required fields', 400
+        summary = database.view_order_summary(username, page, per_page)
+        if summary:
+            return {'summary': summary}, 200
+        else:
+            return f'The product schema is empty', 403
+    except Exception as e:
+        return str(e), 500
+    
+@app.route('/add_to_cart', methods=['POST'])    
+def add_to_cart():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        product_id = data.get('product_id')
+        quantity = int (data.get('quantity'))
+        if not username or not product_id or not quantity:
+            return 'Missing required fields', 400
+        if database.add_to_cart(username, product_id, quantity):
+            return 'Product added to cart successfully', 200
+        else:
+            return 'Product not found or quantity not available', 404
+    except Exception as e:
+        return str(e), 500
+    
+@app.route('/view_cart', methods=['GET'])
+def view_cart():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        page = int (data.get('page', 1))
+        per_page = int (data.get('per_page', 5))
+        if not username:
+            return 'Missing required fields', 400
+        cart = database.view_cart(username, page, per_page)
+        if cart:
+            return {'cart': cart}, 200
+        else:
+            return 'Cart is empty', 404
+    except Exception as e:
+        return str(e), 500
+    
+@app.route('/checkout', methods=['POST'])
+def checkout():
     try:
         data = request.get_json()
         username = data.get('username')
         if not username:
             return 'Missing required fields', 400
-        summary = database.view_sell_summary(username)
-        if summary:
-            return {'summary': summary}, 200
+        if database.checkout(username):
+            return 'Checkout successful', 200
         else:
-            return f'The seller product summary is empty or {username} is not seller', 403
+            return 'Cart is empty', 404
     except Exception as e:
         return str(e), 500
