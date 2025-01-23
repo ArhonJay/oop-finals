@@ -33,8 +33,13 @@ def login():
         password = data.get('password')
         if not username or not password:
             return 'Missing required fields', 400
-        if database.login_user(username, password):
-            return f'Login as {username} successfully', 200
+        user = database.login_user(username, password)
+        if user:
+            return {
+                'message': f'Login as {username} successfully',
+                'user': user.username,
+                'role': user.role
+            }, 200
         else:
             return 'Incorrect username or password', 401
     except Exception as e:

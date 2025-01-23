@@ -41,7 +41,7 @@ class Database:
             user = session.query(User).filter_by(username=username).first()
             if user and user.password == password:
                 print(f'User {username} logged in successfully')
-                return True
+                return user
             else:
                 print('Invalid username or password')
                 return False
