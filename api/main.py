@@ -1,7 +1,9 @@
 from flask import Flask, request
 from .db import Database
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 database = Database()
 
