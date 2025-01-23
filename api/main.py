@@ -96,7 +96,7 @@ def remove_product():
     except Exception as e:
         return str(e), 500
     
-@app.route('/view_seller_summary', methods=['GET'])
+@app.route('/view_seller_summary', methods=['POST'])
 def view_seller_summary():
     try:
         data = request.get_json()
@@ -113,7 +113,7 @@ def view_seller_summary():
     except Exception as e:
         return str(e), 500
     
-@app.route('/view_order_summary', methods=['GET'])
+@app.route('/view_order_summary', methods=['POST'])
 def view_order_summary():
     try:
         data = request.get_json()   
@@ -146,7 +146,7 @@ def add_to_cart():
     except Exception as e:
         return str(e), 500
     
-@app.route('/view_cart', methods=['GET'])
+@app.route('/view_cart', methods=['POST'])
 def view_cart():
     try:
         data = request.get_json()
